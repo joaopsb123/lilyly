@@ -15,11 +15,7 @@
       --card-bg: #1e1e1e;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: var(--preto);
-      color: var(--branco);
-    }
+    body { font-family: 'Segoe UI', sans-serif; background-color: var(--preto); color: var(--branco); }
     .container { max-width: 1200px; margin: auto; padding: 20px; }
     header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--roxo); }
     .logo { font-size: 36px; font-weight: bold; color: var(--roxo); }
@@ -70,7 +66,7 @@
           method: 'GET',
           headers: { 'X-Rapidapi-Key': rapidKey, 'X-Rapidapi-Host': 'spotify-track-search-api.p.rapidapi.com' }
         });
-        const json = await res.json(); console.log(json);
+        const json = await res.json();
         const tracks = Array.isArray(json.data?.tracks) ? json.data.tracks : [];
         searchTab.innerHTML = '';
         if (!tracks.length) {
@@ -84,7 +80,7 @@
             <div class="music-title">${track.title}</div>
             <div class="music-artist">${track.artists.join(', ')}</div>
           `;
-          card.onclick = () => playSpotifyTrack(track.trackUrl, track.previewUrl, track.title, track.artists[0]);
+          card.onclick = () => playSpotifyTrack(track.trackUrl, track.title, track.artists[0]);
           searchTab.appendChild(card);
         });
       } catch (e) {
@@ -93,16 +89,29 @@
       }
     }
 
-    function playSpotifyTrack(trackUrl, previewUrl, title, artist) {
+    async function playSpotifyTrack(trackUrl, title, artist) {
       const player = document.getElementById('player');
       const audio = document.getElementById('audioPlayer');
       const cover = document.getElementById('playerCover');
-      audio.src = previewUrl;
-      document.getElementById('nowPlayingTitle').textContent = title;
-      document.getElementById('nowPlayingArtist').textContent = artist;
-      // cover image via oEmbed do Spotify
-      cover.src = `https://i.scdn.co/image/${trackUrl.split('/').pop()}`; // placeholder: você pode usar dados da API real
-      player.style.display = 'flex';
+      try {
+        const res = await fetch(`https://spotify-downloader9.p.rapidapi.com/downloadSong?songId=${encodeURIComponent(trackUrl)}`, {
+          method: 'GET',
+          headers: { 'X-Rapidapi-Key': rapidKey, 'X-Rapidapi-Host': 'spotify-downloader9.p.rapidapi.com' }
+        });
+        const data = await res.json();
+        if (data.success && data.link) {
+          audio.src = data.link;
+          document.getElementById('nowPlayingTitle').textContent = title;
+          document.getElementById('nowPlayingArtist').textContent = artist;
+          cover.src = data.cover_url || data.cover || 'https://via.placeholder.com/60';
+          player.style.display = 'flex';
+        } else {
+          alert('Não foi possível obter áudio.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Erro ao carregar faixa.');
+      }
     }
   </script>
 </body>
