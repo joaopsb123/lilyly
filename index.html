@@ -62,79 +62,67 @@
     <div id="searchTab" class="results"></div>
   </div>
 
-  <script>
-    const rapidKey = "be6d832346msh3bdcbc41a36e31fp1de253jsnfd355f97011f";
+<script>
+  const rapidKey = "be6d832346msh3bdcbc41a36e31fp1de253jsnfd355f97011f";
 
-    async function searchSoundCloud() {
-      const query = document.getElementById("searchInput").value.trim();
-      const container = document.getElementById("searchTab");
-      container.innerHTML = "Carregando...";
+  async function searchSoundCloud() {
+    const query = document.getElementById("searchInput").value.trim();
+    const container = document.getElementById("searchTab");
+    container.innerHTML = "Carregando...";
 
-      try {
-        const res = await fetch(
-          `https://soundcloud-scraper.p.rapidapi.com/v1/search/tracks?term=${encodeURIComponent(query)}&addedIn=any&duration=any&license=listen`,
-          {
-            method: 'GET',
-            headers: {
-              'X-Rapidapi-Key': rapidKey,
-              'X-Rapidapi-Host': 'soundcloud-scraper.p.rapidapi.com'
-            }
+    try {
+      const res = await fetch(
+        `https://soundcloud-scraper.p.rapidapi.com/v1/search/tracks?term=${encodeURIComponent(query)}&addedIn=any&duration=any&license=listen`,
+        {
+          method: 'GET',
+          headers: {
+            'X-Rapidapi-Key': rapidKey,
+            'X-Rapidapi-Host': 'soundcloud-scraper.p.rapidapi.com'
           }
-        );
-        const json = await res.json();
-        console.log("1) JSON completo da API:", json);
-
-        // Detectamos o array de tracks em qualquer lugar:
-        let tracks = [];
-        if (Array.isArray(json.data?.tracks)) {
-          tracks = json.data.tracks;
-        } else if (Array.isArray(json.tracks)) {
-          tracks = json.tracks;
-        } else if (Array.isArray(json.data)) {
-          tracks = json.data;
-        } else if (Array.isArray(json)) {
-          tracks = json;
         }
+      );
+      const json = await res.json();
+      console.log("JSON completo da API:", json);
 
-        console.log("2) Array de faixas detectado:", tracks);
+      // Agora extraímos o array dentro de json.tracks.collection:
+      const tracks = Array.isArray(json.tracks?.collection)
+        ? json.tracks.collection
+        : [];
 
-        container.innerHTML = "";
-        if (tracks.length === 0) {
-          container.innerHTML = '<p style="color: var(--cinza-claro); text-align:center;">Nenhuma faixa encontrada.</p>';
-          return;
-        }
+      console.log("Array de faixas detectado:", tracks);
 
-        // Renderiza cada faixa
-        tracks.forEach(track => {
-          // Ajuste conforme o JSON real:
-          const title   = track.title   || track.name   || "(sem título)";
-          const artist  = (track.artists && track.artists.join(", ")) ||
-                          track.user?.username ||
-                          track.channelName ||
-                          "(sem artista)";
-          const url     = track.trackUrl    ||
-                          track.permalink_url ||
-                          track.url ||
-                          track.streamUrl    ||
-                          "#";
-
-          const card = document.createElement("div");
-          card.className = "music-card";
-          card.innerHTML = `
-            <div class="music-title">${title}</div>
-            <div class="music-artist">${artist}</div>
-          `;
-          card.onclick = () => {
-            if (url && url !== "#") window.open(url, "_blank");
-            else alert("URL da faixa não disponível.");
-          };
-          container.appendChild(card);
-        });
-      } catch (err) {
-        console.error(err);
-        container.innerHTML = '<p style="color:red; text-align:center;">Erro ao buscar faixas</p>';
+      container.innerHTML = "";
+      if (!tracks.length) {
+        container.innerHTML = '<p style="color: var(--cinza-claro); text-align:center;">Nenhuma faixa encontrada.</p>';
+        return;
       }
+
+      tracks.forEach(track => {
+        const title  = track.title || "(sem título)";
+        // Na SoundCloud Scraper, artists pode vir como string única:
+        const artist = track.artists
+          ? (Array.isArray(track.artists) ? track.artists.join(", ") : track.artists)
+          : track.channelName || "(sem artista)";
+        // URL da faixa:
+        const url    = track.trackUrl || track.url || track.permalink_url || "#";
+
+        const card = document.createElement("div");
+        card.className = "music-card";
+        card.innerHTML = `
+          <div class="music-title">${title}</div>
+          <div class="music-artist">${artist}</div>
+        `;
+        card.onclick = () => {
+          if (url !== "#") window.open(url, "_blank");
+          else alert("URL da faixa não disponível.");
+        };
+        container.appendChild(card);
+      });
+    } catch (err) {
+      console.error(err);
+      container.innerHTML = '<p style="color:red; text-align:center;">Erro ao buscar faixas</p>';
     }
-  </script>
+  }
+</script>
 </body>
 </html>
