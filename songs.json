@@ -1,18 +1,16 @@
 [
   {
-    "id": 1,
     "title": "Os Menino Tá Com o Pacote - MC PH (GR6 Explode) DJ Murillo e LT, Solanno e Frank",
     "artist": "Mc ph",
     "cover": "/music/cover1.jpg",
-    "mp3":   "/music/track1.mp3",
-    "mp4":   "/music/track1.mp4"
+    "mp3": "/music/track1.mp3",
+    "mp4": "/music/track1.mp4"
   },
   {
-    "id": 2,
-    "title": "Segunda Música",
-    "artist": "varios",
-    "cover": "/music/cover2.jpg",
-    "mp3":   "/music/track2.mp3",
-    "mp4":   "/music/track2.mp4"
+    "title": "Minha Música 2",
+    "artist": "Artista B",
+    "cover": "caminho/para/imagem2.jpg",
+    "mp3": "musicas/musica2.mp3",
+    "mp4": "videos/video2.mp4"
   }
 ]
