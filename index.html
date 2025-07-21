@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lilyfy - Player de Música</title>
+  <title>Lilyfy – Player de Música</title>
   <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
   <style>
@@ -22,14 +22,9 @@
       color: var(--branco);
     }
     .container { max-width: 1200px; margin: auto; padding: 20px; }
-    header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 20px 0; border-bottom: 1px solid var(--roxo);
-    }
+    header { display: flex; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--roxo); }
     .logo { font-size: 36px; font-weight: bold; color: var(--roxo); }
-    .search-box {
-      display: flex; margin: 40px 0 20px; gap: 10px;
-    }
+    .search-box { display: flex; margin: 40px 0 20px; gap: 10px; }
     .search-box input {
       flex: 1; padding: 14px; border-radius: 30px; border: none;
       font-size: 16px; background: #2a2a2a; color: white;
@@ -67,69 +62,79 @@
     <div id="searchTab" class="results"></div>
   </div>
 
-<script>
-  const rapidKey = "be6d832346msh3bdcbc41a36e31fp1de253jsnfd355f97011f";
+  <script>
+    const rapidKey = "be6d832346msh3bdcbc41a36e31fp1de253jsnfd355f97011f";
 
-  async function searchSoundCloud() {
-    const query = document.getElementById("searchInput").value.trim();
-    const container = document.getElementById("searchTab");
-    container.innerHTML = "Carregando...";
+    async function searchSoundCloud() {
+      const query = document.getElementById("searchInput").value.trim();
+      const container = document.getElementById("searchTab");
+      container.innerHTML = "Carregando...";
 
-    try {
-      const res = await fetch(
-        `https://soundcloud-scraper.p.rapidapi.com/v1/search/tracks?term=${encodeURIComponent(query)}&addedIn=any&duration=any&license=listen`,
-        {
-          method: 'GET',
-          headers: {
-            'X-Rapidapi-Key': rapidKey,
-            'X-Rapidapi-Host': 'soundcloud-scraper.p.rapidapi.com'
+      try {
+        const res = await fetch(
+          `https://soundcloud-scraper.p.rapidapi.com/v1/search/tracks?term=${encodeURIComponent(query)}&addedIn=any&duration=any&license=listen`,
+          {
+            method: 'GET',
+            headers: {
+              'X-Rapidapi-Key': rapidKey,
+              'X-Rapidapi-Host': 'soundcloud-scraper.p.rapidapi.com'
+            }
           }
+        );
+        const json = await res.json();
+        console.log("1) JSON completo da API:", json);
+
+        // Detectamos o array de tracks em qualquer lugar:
+        let tracks = [];
+        if (Array.isArray(json.data?.tracks)) {
+          tracks = json.data.tracks;
+        } else if (Array.isArray(json.tracks)) {
+          tracks = json.tracks;
+        } else if (Array.isArray(json.data)) {
+          tracks = json.data;
+        } else if (Array.isArray(json)) {
+          tracks = json;
         }
-      );
-      const json = await res.json();
-      console.log("SoundCloud API response:", json);
 
-      // Tentamos extrair o array de faixas de várias formas
-      let tracks = [];
-      if (Array.isArray(json.data?.tracks)) {
-        tracks = json.data.tracks;
-      } else if (Array.isArray(json.tracks)) {
-        tracks = json.tracks;
-      } else if (Array.isArray(json.data)) {
-        tracks = json.data;
-      } else if (Array.isArray(json)) {
-        tracks = json;
+        console.log("2) Array de faixas detectado:", tracks);
+
+        container.innerHTML = "";
+        if (tracks.length === 0) {
+          container.innerHTML = '<p style="color: var(--cinza-claro); text-align:center;">Nenhuma faixa encontrada.</p>';
+          return;
+        }
+
+        // Renderiza cada faixa
+        tracks.forEach(track => {
+          // Ajuste conforme o JSON real:
+          const title   = track.title   || track.name   || "(sem título)";
+          const artist  = (track.artists && track.artists.join(", ")) ||
+                          track.user?.username ||
+                          track.channelName ||
+                          "(sem artista)";
+          const url     = track.trackUrl    ||
+                          track.permalink_url ||
+                          track.url ||
+                          track.streamUrl    ||
+                          "#";
+
+          const card = document.createElement("div");
+          card.className = "music-card";
+          card.innerHTML = `
+            <div class="music-title">${title}</div>
+            <div class="music-artist">${artist}</div>
+          `;
+          card.onclick = () => {
+            if (url && url !== "#") window.open(url, "_blank");
+            else alert("URL da faixa não disponível.");
+          };
+          container.appendChild(card);
+        });
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = '<p style="color:red; text-align:center;">Erro ao buscar faixas</p>';
       }
-
-      container.innerHTML = "";
-      if (!tracks.length) {
-        container.innerHTML = '<p style="color: var(--cinza-claro); text-align:center;">Nenhuma faixa encontrada.</p>';
-        return;
-      }
-
-      tracks.forEach(track => {
-        // Ajuste aqui se os campos tiverem nomes diferentes
-        const title = track.title || track.name || track.trackName;
-        const artists = track.artists || track.user?.username || [];
-        const url   = track.trackUrl || track.permalink_url || track.url;
-
-        const card = document.createElement("div");
-        card.className = "music-card";
-        card.innerHTML = `
-          <div class="music-title">${title}</div>
-          <div class="music-artist">${Array.isArray(artists) ? artists.join(", ") : artists}</div>
-        `;
-        card.onclick = () => {
-          if (url) window.open(url, "_blank");
-          else alert("URL da faixa não disponível.");
-        };
-        container.appendChild(card);
-      });
-    } catch (err) {
-      console.error(err);
-      container.innerHTML = '<p style="color:red; text-align:center;">Erro ao buscar faixas</p>';
     }
-  }
-</script>
+  </script>
 </body>
 </html>
