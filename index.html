@@ -1,73 +1,110 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lilyfy – YouTube MP3</title>
+  <title>MP3 Downloader</title>
   <style>
-    body { margin:0; font-family: sans-serif; background:#111; color:#fff; }
-    .search { display:flex; padding:20px; gap:10px; }
-    .search input { flex:1; padding:8px; border-radius:4px; border:none; }
-    .search button { padding:8px 16px; background:#8a2be2; border:none; color:white; cursor:pointer; }
-    .results { padding:20px; display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:20px; }
-    .card { background:#222; padding:10px; border-radius:8px; display:flex; flex-direction:column; }
-    .card h3 { font-size:16px; margin:10px 0; }
-    .card small { color:#aaa; margin-bottom:8px; }
-    .card button, .card a { margin-right:6px; background:#8a2be2; border:none; border-radius:4px; padding:6px 8px; color:white; cursor:pointer; text-decoration:none;}
-    audio { width:100%; margin-bottom:6px; }
+    body {
+      background-color: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #6200ea;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .results {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .track {
+      background: #1e1e1e;
+      padding: 15px;
+      border-radius: 5px;
+    }
+    .track-title {
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .download-btn {
+      margin-top: 8px;
+      display: inline-block;
+      background: #03dac6;
+      color: #000;
+      padding: 8px 12px;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
+  <h1>🔊 MP3 Downloader</h1>
+  <div class="search-box">
+    <input type="text" id="query" placeholder="Digite o nome da música ou artista">
+    <button onclick="doSearch()">Buscar</button>
+  </div>
+  <div id="results" class="results"></div>
 
-<div class="search">
-  <input type="text" id="q" placeholder="Buscar música no YouTube..." />
-  <button onclick="doSearch()">Buscar</button>
-</div>
+  <script>
+    const API_KEY = 'be6d832346msh3bdcbc41a36e31fp1de253jsnfd355f97011f';
+    const HOST = 'yt-search-and-download-mp3.p.rapidapi.com';
 
-<div class="results" id="results">Digite um termo e clique em buscar.</div>
+    async function doSearch() {
+      const query = document.getElementById("query").value.trim();
+      const results = document.getElementById("results");
+      results.innerHTML = '🔍 Buscando...';
 
-<script>
-  const API_KEY = 'be6d832346msh3bdcbc41a36e31fp1de253jsnfd355f97011f';
-  const HOST = 'yt-search-and-download-mp3.p.rapidapi.com';
+      try {
+        const response = await fetch(`https://${HOST}/search?query=${encodeURIComponent(query)}`, {
+          method: 'GET',
+          headers: {
+            'X-Rapidapi-Key': API_KEY,
+            'X-Rapidapi-Host': HOST
+          }
+        });
 
-  async function doSearch() {
-    const q = document.getElementById('q').value.trim();
-    const resDiv = document.getElementById('results');
-    if (!q) return resDiv.textContent = 'Digite um termo.';
+        const data = await response.json();
 
-    resDiv.innerHTML = 'Carregando...';
-    try {
-      const resp = await fetch(`https://${HOST}/search/${encodeURIComponent(q)}`, {
-        method: 'GET',
-        headers: {
-          'X-Rapidapi-Key': API_KEY,
-          'X-Rapidapi-Host': HOST
+        if (!data || !data.data || data.data.length === 0) {
+          results.innerHTML = '<p>Nenhum resultado encontrado.</p>';
+          return;
         }
-      });
-      const json = await resp.json();
-      const items = Array.isArray(json) ? json : (json.results || []);
-      if (!items.length) return resDiv.textContent = 'Nenhum resultado.';
 
-      resDiv.innerHTML = '';
-      items.forEach(item => {
-        const { title, url: videoUrl, thumbnail, channel, link } = item;
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-          ${thumbnail ? `<img src="${thumbnail}" alt="${title}" style="width:100%; border-radius:4px">` : ''}
-          <h3>${title}</h3>
-          <small>${channel || ''}</small>
-          <audio controls src="${link}"></audio>
-          <a href="${link}" download>⬇️ Baixar MP3</a>
-        `;
-        resDiv.appendChild(card);
-      });
-    } catch (err) {
-      console.error(err);
-      resDiv.textContent = 'Erro ao buscar. Veja o console.';
+        results.innerHTML = '';
+        data.data.forEach(track => {
+          const trackDiv = document.createElement('div');
+          trackDiv.className = 'track';
+
+          trackDiv.innerHTML = `
+            <div class="track-title">${track.title}</div>
+            <a href="${track.link}" class="download-btn" target="_blank">⬇️ Baixar MP3</a>
+          `;
+
+          results.appendChild(trackDiv);
+        });
+      } catch (error) {
+        console.error(error);
+        results.innerHTML = '<p style="color:red;">Erro ao buscar músicas.</p>';
+      }
     }
-  }
-</script>
-
+  </script>
 </body>
 </html>
