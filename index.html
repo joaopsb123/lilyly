@@ -1,139 +1,81 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lilyfy - Player</title>
+  <title>Lilyfy – Busca e Download via API</title>
   <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background: #111;
-      color: white;
-    }
-    header {
-      background: #8a2be2;
-      padding: 20px;
-      text-align: center;
-      font-size: 28px;
-      font-weight: bold;
-    }
-    .main {
-      display: flex;
-      padding: 20px;
-    }
-    .player-section {
-      flex: 2;
-      margin-right: 20px;
-    }
-    .playlist {
-      flex: 1;
-      background: #222;
-      border-radius: 10px;
-      overflow-y: auto;
-      max-height: 80vh;
-    }
-    .playlist-item {
-      display: flex;
-      gap: 10px;
-      padding: 10px;
-      cursor: pointer;
-      border-bottom: 1px solid #444;
-    }
-    .playlist-item:hover {
-      background: #333;
-    }
-    .playlist-item img {
-      width: 50px;
-      height: 50px;
-      border-radius: 5px;
-    }
-    video, audio {
-      width: 100%;
-      border-radius: 10px;
-      margin-top: 10px;
-    }
-    .info {
-      margin-top: 10px;
-    }
-    .download-buttons {
-      margin-top: 10px;
-    }
-    .download-buttons a {
-      display: inline-block;
-      padding: 8px 12px;
-      margin-right: 10px;
-      background: #8a2be2;
-      color: white;
-      border-radius: 5px;
-      text-decoration: none;
-    }
+    body { font-family: sans-serif; background:#111; color:#fff; margin:0; }
+    .search { display:flex; padding:20px; gap:10px; }
+    .search input { flex:1; padding:8px; border-radius:4px; border:none; }
+    .search button { padding:8px 16px; background:#8a2be2; border:none; color:#fff; border-radius:4px; cursor:pointer; }
+    .results { padding:20px; display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:20px; }
+    .card { background:#222; border-radius:8px; padding:10px; display:flex; flex-direction:column; }
+    .card img { width:100%; height:120px; object-fit:cover; border-radius:4px; }
+    .card h3 { margin:10px 0 6px; font-size:16px; }
+    .card p { font-size:14px; color:#aaa; margin:0 0 10px; flex:1; }
+    .actions a { display:inline-block; margin-right:6px; color:#8a2be2; text-decoration:none; font-weight:bold; }
   </style>
 </head>
 <body>
 
-<header>Lilyfy 🎧</header>
-
-<div class="main">
-  <div class="player-section">
-    <div class="info">
-      <h2 id="trackTitle">Selecione uma faixa</h2>
-      <p id="trackArtist"></p>
-    </div>
-
-    <video id="videoPlayer" controls></video>
-    <audio id="audioPlayer" controls style="display:none;"></audio>
-
-    <div class="download-buttons">
-      <a id="downloadMp3" href="#" download>Download MP3</a>
-      <a id="downloadMp4" href="#" download>Download MP4</a>
-    </div>
-  </div>
-
-  <div class="playlist" id="playlist"></div>
+<div class="search">
+  <input type="text" id="query" placeholder="Buscar música, filme, app..."/>
+  <button onclick="search()">Buscar</button>
 </div>
 
-<script>
-  const playlistContainer = document.getElementById("playlist");
-  const videoPlayer = document.getElementById("videoPlayer");
-  const audioPlayer = document.getElementById("audioPlayer");
-  const titleEl = document.getElementById("trackTitle");
-  const artistEl = document.getElementById("trackArtist");
-  const downloadMp3 = document.getElementById("downloadMp3");
-  const downloadMp4 = document.getElementById("downloadMp4");
+<div class="results" id="results">Digite e clique em buscar.</div>
 
-  fetch('songs.json')
-    .then(res => res.json())
-    .then(tracks => {
-      tracks.forEach(track => {
-        const item = document.createElement("div");
-        item.className = "playlist-item";
-        item.innerHTML = `
-          <img src="${track.cover}" alt="Capa">
-          <div>
-            <div><strong>${track.title}</strong></div>
-            <div style="font-size: 12px; color: #aaa;">${track.artist}</div>
+<script>
+  const RAPID_KEY = 'be6d832346msh3bdcbc41a36e31fp1de253jsnfd355f97011f';
+  const HOST = 'movie-games-music-web-series-apps-search-and-download.p.rapidapi.com';
+
+  async function search() {
+    const q = document.getElementById('query').value.trim();
+    const resDiv = document.getElementById('results');
+    resDiv.innerHTML = 'Carregando...';
+    if (!q) { resDiv.textContent = 'Digite algo para buscar.'; return; }
+
+    try {
+      const resp = await fetch(`https://${HOST}/search/${encodeURIComponent(q)}`, {
+        headers: {
+          'X-Rapidapi-Key': RAPID_KEY,
+          'X-Rapidapi-Host': HOST
+        }
+      });
+      const data = await resp.json();
+      // Ajuste conforme estrutura real do retorno
+      const items = data.results || data.data || [];
+      if (!items.length) { resDiv.textContent = 'Nenhum resultado encontrado.'; return; }
+
+      resDiv.innerHTML = '';
+      items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const title = item.title || item.name;
+        const desc = item.description || item.type || '';
+        const thumb = item.thumbnail || item.cover || '';
+
+        const stream = item.streamUrl || item.downloadUrl;
+        const download = item.downloadUrl || item.streamUrl;
+
+        card.innerHTML = `
+          ${thumb ? `<img src="${thumb}" alt="${title}">` : ''}
+          <h3>${title}</h3>
+          <p>${desc}</p>
+          <div class="actions">
+            ${stream ? `<a href="${stream}" target="_blank">▶︎ Ouvir/Assistir</a>` : ''}
+            ${download ? `<a href="${download}" download>⬇️ Baixar</a>` : ''}
           </div>
         `;
-        item.onclick = () => {
-          titleEl.textContent = track.title;
-          artistEl.textContent = track.artist;
-          videoPlayer.src = track.mp4;
-          audioPlayer.src = track.mp3;
-          downloadMp3.href = track.mp3;
-          downloadMp4.href = track.mp4;
-
-          videoPlayer.style.display = 'block';
-          audioPlayer.pause();
-          videoPlayer.load();
-          videoPlayer.play();
-        };
-        playlistContainer.appendChild(item);
+        resDiv.appendChild(card);
       });
-    })
-    .catch(err => {
-      console.error("Erro ao carregar músicas:", err);
-    });
+    } catch(err) {
+      console.error(err);
+      resDiv.textContent = 'Erro ao buscar. Veja o console.';
+    }
+  }
 </script>
 
 </body>
