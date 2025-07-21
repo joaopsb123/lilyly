@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lilyfy - Baixar Músicas MP3</title>
+  <title>Lilyfy - Baixar Músicas e Álbuns</title>
   <style>
     :root {
       --primary: #8a2be2;
@@ -27,7 +27,10 @@
     header {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       margin-bottom: 30px;
+      flex-wrap: wrap;
+      gap: 15px;
     }
     
     .logo {
@@ -41,6 +44,26 @@
     
     .logo i {
       font-size: 32px;
+    }
+    
+    .search-tabs {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .search-tab {
+      padding: 10px 20px;
+      background: var(--gray);
+      border: none;
+      color: var(--light);
+      border-radius: 50px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+    
+    .search-tab.active {
+      background: var(--primary);
     }
     
     .search-box {
@@ -67,7 +90,7 @@
       box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.3);
     }
     
-    button {
+    .search-btn {
       padding: 15px 30px;
       background: linear-gradient(135deg, var(--primary), var(--secondary));
       border: none;
@@ -77,9 +100,12 @@
       font-weight: bold;
       font-size: 16px;
       transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     
-    button:hover {
+    .search-btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 5px 15px rgba(138, 43, 226, 0.4);
     }
@@ -87,33 +113,81 @@
     .results {
       display: flex;
       flex-direction: column;
+      gap: 20px;
+    }
+    
+    .album-card {
+      background: var(--gray);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    
+    .album-header {
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+      align-items: center;
+    }
+    
+    .album-cover {
+      width: 150px;
+      height: 150px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+    
+    .album-info {
+      flex: 1;
+    }
+    
+    .album-title {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .album-artist {
+      font-size: 18px;
+      color: #aaa;
+      margin-bottom: 10px;
+    }
+    
+    .album-meta {
+      display: flex;
       gap: 15px;
+      color: #777;
+      font-size: 14px;
+    }
+    
+    .tracks-list {
+      border-top: 1px solid #333;
     }
     
     .track {
-      background: var(--gray);
-      padding: 20px;
-      border-radius: 10px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      transition: all 0.3s;
+      padding: 15px 20px;
+      transition: all 0.2s;
     }
     
     .track:hover {
-      transform: translateX(5px);
       background: #333;
+    }
+    
+    .track-number {
+      width: 30px;
+      text-align: center;
+      color: #777;
     }
     
     .track-info {
       flex: 1;
+      margin-left: 15px;
     }
     
     .track-title {
       font-weight: bold;
-      font-size: 18px;
-      margin-bottom: 5px;
-      color: var(--light);
+      margin-bottom: 3px;
     }
     
     .track-artist {
@@ -121,29 +195,45 @@
       font-size: 14px;
     }
     
+    .track-duration {
+      color: #777;
+      margin: 0 20px;
+    }
+    
     .download-btn {
       background: linear-gradient(135deg, var(--accent), #ff1493);
       color: white;
-      padding: 10px 20px;
+      padding: 8px 15px;
       border-radius: 50px;
       text-decoration: none;
       font-weight: bold;
       display: flex;
       align-items: center;
       gap: 8px;
+      font-size: 14px;
       transition: all 0.3s;
     }
     
     .download-btn:hover {
       transform: scale(1.05);
-      box-shadow: 0 5px 15px rgba(255, 0, 255, 0.4);
+      box-shadow: 0 3px 10px rgba(255, 0, 255, 0.3);
+    }
+    
+    .music-result {
+      background: var(--gray);
+      padding: 15px 20px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
     
     .loading {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 10px;
+      gap: 15px;
+      padding: 40px;
       font-size: 18px;
     }
     
@@ -151,14 +241,22 @@
       border: 3px solid rgba(255, 255, 255, 0.3);
       border-radius: 50%;
       border-top: 3px solid var(--accent);
-      width: 20px;
-      height: 20px;
+      width: 24px;
+      height: 24px;
       animation: spin 1s linear infinite;
     }
     
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
+    }
+    
+    .error-message {
+      text-align: center;
+      color: #ff5555;
+      padding: 20px;
+      background: rgba(255, 85, 85, 0.1);
+      border-radius: 10px;
     }
     
     footer {
@@ -169,15 +267,32 @@
     }
     
     @media (max-width: 768px) {
-      .track {
+      .album-header {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
+        text-align: center;
+      }
+      
+      .album-cover {
+        width: 200px;
+        height: 200px;
+      }
+      
+      .album-meta {
+        justify-content: center;
+      }
+      
+      .track {
+        flex-wrap: wrap;
+      }
+      
+      .track-duration {
+        margin-left: auto;
       }
       
       .download-btn {
         width: 100%;
         justify-content: center;
+        margin-top: 10px;
       }
     }
   </style>
@@ -189,17 +304,21 @@
       <i class="fas fa-music"></i>
       <span>Lilyfy</span>
     </div>
+    <div class="search-tabs">
+      <button class="search-tab active" data-type="music"><i class="fas fa-music"></i> Músicas</button>
+      <button class="search-tab" data-type="album"><i class="fas fa-compact-disc"></i> Álbuns</button>
+    </div>
   </header>
   
   <div class="search-box">
     <input type="text" id="query" placeholder="Digite o nome da música ou artista..." autocomplete="off">
-    <button onclick="doSearch()">
+    <button class="search-btn" id="search-button">
       <i class="fas fa-search"></i> Buscar
     </button>
   </div>
   
   <div id="results" class="results">
-    <p style="text-align: center; color: #666;">Busque por suas músicas favoritas para baixar</p>
+    <p style="text-align: center; color: #666;">Busque por músicas ou álbuns para baixar</p>
   </div>
   
   <footer>
@@ -208,8 +327,82 @@
 
   <script>
     const API_KEY = 'be6d832346msh3bdcbc41a36e31fp1de253jsnfd355f97011f';
-    const API_HOST = 'youtube-music4.p.rapidapi.com'; // API corrigida
+    const API_HOST = 'youtube-music4.p.rapidapi.com';
+    let currentSearchType = 'music';
 
+    // Configurar tabs de busca
+    document.querySelectorAll('.search-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        currentSearchType = tab.dataset.type;
+        document.querySelectorAll('.search-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('query').placeholder = 
+          currentSearchType === 'music' 
+            ? "Digite o nome da música ou artista..." 
+            : "Digite o nome do álbum ou artista...";
+      });
+    });
+
+    // Função para buscar álbum por ID
+    async function fetchAlbum(albumId) {
+      try {
+        const response = await fetch(`https://${API_HOST}/album`, {
+          method: 'POST',
+          headers: {
+            'X-RapidAPI-Key': API_KEY,
+            'X-RapidAPI-Host': API_HOST,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ album_id: albumId })
+        });
+
+        if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+        return await response.json();
+      } catch (error) {
+        console.error('Erro ao buscar álbum:', error);
+        throw error;
+      }
+    }
+
+    // Função para buscar músicas
+    async function fetchMusic(query) {
+      try {
+        const response = await fetch(`https://${API_HOST}/search?query=${encodeURIComponent(query)}`, {
+          method: 'GET',
+          headers: {
+            'X-RapidAPI-Key': API_KEY,
+            'X-RapidAPI-Host': API_HOST
+          }
+        });
+
+        if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+        return await response.json();
+      } catch (error) {
+        console.error('Erro ao buscar músicas:', error);
+        throw error;
+      }
+    }
+
+    // Função para buscar álbuns (lista)
+    async function fetchAlbums(query) {
+      try {
+        const response = await fetch(`https://${API_HOST}/search_albums?query=${encodeURIComponent(query)}`, {
+          method: 'GET',
+          headers: {
+            'X-RapidAPI-Key': API_KEY,
+            'X-RapidAPI-Host': API_HOST
+          }
+        });
+
+        if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+        return await response.json();
+      } catch (error) {
+        console.error('Erro ao buscar álbuns:', error);
+        throw error;
+      }
+    }
+
+    // Função principal de busca
     async function doSearch() {
       const query = document.getElementById("query").value.trim();
       if (!query) return;
@@ -218,66 +411,116 @@
       results.innerHTML = `
         <div class="loading">
           <div class="spinner"></div>
-          <span>Buscando músicas...</span>
+          <span>Buscando ${currentSearchType === 'music' ? 'músicas' : 'álbuns'}...</span>
         </div>
       `;
       
       try {
-        // Usando a API correta do YouTube Music
-        const response = await fetch(`https://${API_HOST}/search?query=${encodeURIComponent(query)}`, {
-          method: 'GET',
-          headers: {
-            'X-RapidAPI-Key': API_KEY,
-            'X-RapidAPI-Host': API_HOST
+        if (currentSearchType === 'music') {
+          // Buscar músicas individuais
+          const data = await fetchMusic(query);
+          
+          if (!data || !data.result || data.result.length === 0) {
+            results.innerHTML = '<div class="error-message">Nenhuma música encontrada. Tente com termos diferentes.</div>';
+            return;
           }
-        });
-        
-        if (!response.ok) throw new Error("Erro na API: " + response.status);
-        
-        const data = await response.json();
-        
-        if (!data || !data.result || data.result.length === 0) {
-          results.innerHTML = '<p style="text-align: center; color: #ff5555;">Nenhum resultado encontrado. Tente com termos diferentes.</p>';
-          return;
+          
+          displayMusicResults(data.result);
+        } else {
+          // Buscar álbuns
+          const albumsData = await fetchAlbums(query);
+          
+          if (!albumsData || !albumsData.result || albumsData.result.length === 0) {
+            results.innerHTML = '<div class="error-message">Nenhum álbum encontrado. Tente com termos diferentes.</div>';
+            return;
+          }
+          
+          // Pegar o primeiro álbum e mostrar suas faixas
+          const albumId = albumsData.result[0].album_id;
+          const albumDetails = await fetchAlbum(albumId);
+          displayAlbumResults(albumDetails);
         }
-        
-        results.innerHTML = '';
-        data.result.forEach((item, index) => {
-          if (index >= 10) return; // Limitar a 10 resultados
-          
-          const trackDiv = document.createElement('div');
-          trackDiv.className = 'track';
-          
-          const title = item.name || "Música sem título";
-          const artist = item.artist || "Artista desconhecido";
-          const videoId = item.videoId || '';
-          
-          trackDiv.innerHTML = `
-            <div class="track-info">
-              <div class="track-title">${title}</div>
-              <div class="track-artist">${artist}</div>
-            </div>
-            <a href="https://www.youtube.com/watch?v=${videoId}" 
-               class="download-btn" 
-               target="_blank">
-              <i class="fas fa-download"></i> Baixar
-            </a>
-          `;
-          
-          results.appendChild(trackDiv);
-        });
       } catch (error) {
         console.error(error);
         results.innerHTML = `
-          <p style="text-align: center; color: #ff5555;">
-            Ocorreu um erro ao buscar músicas. Por favor, tente novamente mais tarde.
+          <div class="error-message">
+            Ocorreu um erro ao buscar ${currentSearchType === 'music' ? 'músicas' : 'álbuns'}.
             <br><small>${error.message}</small>
-          </p>
+          </div>
         `;
       }
     }
+
+    // Exibir resultados de músicas
+    function displayMusicResults(musics) {
+      const results = document.getElementById("results");
+      results.innerHTML = '';
+      
+      musics.slice(0, 10).forEach((music, index) => {
+        const musicDiv = document.createElement('div');
+        musicDiv.className = 'music-result';
+        
+        musicDiv.innerHTML = `
+          <div class="track-info">
+            <div class="track-title">${music.name || 'Música sem título'}</div>
+            <div class="track-artist">${music.artist || 'Artista desconhecido'}</div>
+          </div>
+          <a href="https://www.youtube.com/watch?v=${music.videoId}" 
+             class="download-btn" 
+             target="_blank">
+            <i class="fas fa-download"></i> Baixar
+          </a>
+        `;
+        
+        results.appendChild(musicDiv);
+      });
+    }
+
+    // Exibir resultados de álbum
+    function displayAlbumResults(album) {
+      const results = document.getElementById("results");
+      results.innerHTML = '';
+      
+      const albumDiv = document.createElement('div');
+      albumDiv.className = 'album-card';
+      
+      albumDiv.innerHTML = `
+        <div class="album-header">
+          <img src="${album.thumbnail || 'https://via.placeholder.com/150'}" alt="Capa do Álbum" class="album-cover">
+          <div class="album-info">
+            <h1 class="album-title">${album.name || 'Álbum sem título'}</h1>
+            <div class="album-artist">${album.artist || 'Artista desconhecido'}</div>
+            <div class="album-meta">
+              <span>${album.year || 'Ano desconhecido'}</span>
+              <span>${album.trackCount || '?'} músicas</span>
+            </div>
+          </div>
+        </div>
+        <div class="tracks-list">
+          ${album.tracks.map((track, index) => `
+            <div class="track">
+              <div class="track-number">${index + 1}</div>
+              <div class="track-info">
+                <div class="track-title">${track.name || 'Música sem título'}</div>
+                <div class="track-artist">${track.artist || 'Artista desconhecido'}</div>
+              </div>
+              <div class="track-duration">${track.duration || '--:--'}</div>
+              <a href="https://www.youtube.com/watch?v=${track.videoId}" 
+                 class="download-btn" 
+                 target="_blank">
+                <i class="fas fa-download"></i> Baixar
+              </a>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      
+      results.appendChild(albumDiv);
+    }
+
+    // Event listeners
+    document.getElementById("search-button").addEventListener('click', doSearch);
     
-    // Permitir busca com Enter
     document.getElementById("query").addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
         doSearch();
