@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lilyfy – Player de Música</title>
-  <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <title>Lilyfy – Player HLS SoundCloud</title>
+
+  <!-- HLS.js para reprodução de .m3u8 -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
   <style>
     :root {
       --roxo: #8a2be2;
@@ -13,116 +15,158 @@
       --cinza-claro: #b3b3b3;
       --preto: #121212;
       --branco: #ffffff;
-      --card-bg: #1e1e1e;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin:0; padding:0; }
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: var(--preto);
+      font-family:'Segoe UI',sans-serif;
+      background: var(--preto);
       color: var(--branco);
+      display:flex; flex-direction:column;
+      min-height:100vh;
     }
-    .container { max-width: 1200px; margin: auto; padding: 20px; }
-    header { display: flex; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--roxo); }
-    .logo { font-size: 36px; font-weight: bold; color: var(--roxo); }
-    .search-box { display: flex; margin: 40px 0 20px; gap: 10px; }
+    .container {
+      flex:1; max-width:800px; width:100%;
+      margin: auto; padding:20px;
+    }
+    header { text-align:center; margin-bottom:20px; }
+    h1 { color: var(--roxo); }
+    .search-box {
+      display:flex; gap:10px; margin-bottom:20px;
+    }
     .search-box input {
-      flex: 1; padding: 14px; border-radius: 30px; border: none;
-      font-size: 16px; background: #2a2a2a; color: white;
+      flex:1; padding:10px 14px; border-radius:6px;
+      border:1px solid #444; background:#222; color:#fff;
+      font-size:16px;
     }
     .search-box button {
-      background-color: var(--roxo); color: white; border: none;
-      padding: 14px 24px; font-size: 16px; font-weight: bold;
-      border-radius: 30px; cursor: pointer;
+      background: var(--roxo); border:none;
+      padding: 0 20px; font-size:16px; font-weight:bold;
+      border-radius:6px; cursor:pointer; color:#fff;
     }
-    .results {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 20px;
+    #playerContainer {
+      display:none; margin-top:20px;
     }
-    .music-card {
-      background: var(--card-bg); border-radius: 15px;
-      padding: 12px; text-align: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      transition: transform 0.2s; cursor: pointer;
+    video, audio {
+      width:100%; border-radius:8px;
+      background:#000;
     }
-    .music-card:hover { transform: scale(1.03); }
-    .music-title { font-weight: bold; margin-top: 10px; }
-    .music-artist { font-size: 14px; color: var(--cinza-claro); }
   </style>
 </head>
+
 <body>
   <div class="container">
-    <header><div class="logo">LILYFY</div></header>
+    <header>
+      <h1>Lilyfy HLS SoundCloud</h1>
+      <p>Cole a URL de uma faixa do SoundCloud e toque completa</p>
+    </header>
 
     <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Digite o nome da música ou artista">
-      <button onclick="searchSoundCloud()">Buscar</button>
+      <input type="text" id="trackUrlInput"
+             placeholder="https://soundcloud.com/usuário/faixa">
+      <button onclick="startPlayback()">Tocar</button>
     </div>
 
-    <div id="searchTab" class="results"></div>
+    <div id="messages"></div>
+
+    <div id="playerContainer">
+      <!-- O HLS.js vai injetar o <video> aqui -->
+    </div>
   </div>
 
-<script>
-  const rapidKey = "be6d832346msh3bdcbc41a36e31fp1de253jsnfd355f97011f";
+  <script>
+    const rapidKey = "be6d832346msh3bdcbc41a36e31fp1de253jsnfd355f97011f";
+    const host3   = "soundcloud-api3.p.rapidapi.com";
 
-  async function searchSoundCloud() {
-    const query = document.getElementById("searchInput").value.trim();
-    const container = document.getElementById("searchTab");
-    container.innerHTML = "Carregando...";
+    async function startPlayback() {
+      const trackUrl = document.getElementById("trackUrlInput").value.trim();
+      const msg = document.getElementById("messages");
+      const playerDiv = document.getElementById("playerContainer");
+      msg.textContent = "";
+      playerDiv.innerHTML = "";
+      playerDiv.style.display = "none";
 
-    try {
-      const res = await fetch(
-        `https://soundcloud-scraper.p.rapidapi.com/v1/search/tracks?term=${encodeURIComponent(query)}&addedIn=any&duration=any&license=listen`,
-        {
-          method: 'GET',
-          headers: {
-            'X-Rapidapi-Key': rapidKey,
-            'X-Rapidapi-Host': 'soundcloud-scraper.p.rapidapi.com'
-          }
-        }
-      );
-      const json = await res.json();
-      console.log("JSON completo da API:", json);
-
-      // Agora extraímos o array dentro de json.tracks.collection:
-      const tracks = Array.isArray(json.tracks?.collection)
-        ? json.tracks.collection
-        : [];
-
-      console.log("Array de faixas detectado:", tracks);
-
-      container.innerHTML = "";
-      if (!tracks.length) {
-        container.innerHTML = '<p style="color: var(--cinza-claro); text-align:center;">Nenhuma faixa encontrada.</p>';
+      if (!trackUrl) {
+        msg.textContent = "Por favor, cole a URL de uma faixa do SoundCloud.";
         return;
       }
 
-      tracks.forEach(track => {
-        const title  = track.title || "(sem título)";
-        // Na SoundCloud Scraper, artists pode vir como string única:
-        const artist = track.artists
-          ? (Array.isArray(track.artists) ? track.artists.join(", ") : track.artists)
-          : track.channelName || "(sem artista)";
-        // URL da faixa:
-        const url    = track.trackUrl || track.url || track.permalink_url || "#";
+      try {
+        msg.textContent = "1/3 → Resolvendo trackId…";
+        // 1) Resolve a URL para obter o trackId
+        const resResolve = await fetch(
+          `https://${host3}/v1/resolve?url=${encodeURIComponent(trackUrl)}`,
+          {
+            method: "GET",
+            headers: {
+              "X-Rapidapi-Key": rapidKey,
+              "X-Rapidapi-Host": host3
+            }
+          }
+        );
+        const jsonResolve = await resResolve.json();
+        const trackId = jsonResolve.id;
+        if (!trackId) throw new Error("Não conseguiu resolver trackId.");
 
-        const card = document.createElement("div");
-        card.className = "music-card";
-        card.innerHTML = `
-          <div class="music-title">${title}</div>
-          <div class="music-artist">${artist}</div>
-        `;
-        card.onclick = () => {
-          if (url !== "#") window.open(url, "_blank");
-          else alert("URL da faixa não disponível.");
-        };
-        container.appendChild(card);
-      });
-    } catch (err) {
-      console.error(err);
-      container.innerHTML = '<p style="color:red; text-align:center;">Erro ao buscar faixas</p>';
+        msg.textContent = "2/3 → Buscando dados do track…";
+        // 2) Buscar metadados do track (inclui streamId e authorization)
+        const resMeta = await fetch(
+          `https://${host3}/v1/tracks/${trackId}`,
+          {
+            method: "GET",
+            headers: {
+              "X-Rapidapi-Key": rapidKey,
+              "X-Rapidapi-Host": host3
+            }
+          }
+        );
+        const meta = await resMeta.json();
+        const streamId           = meta.streamId;
+        const trackAuthorization = meta.trackAuthorization;
+        if (!streamId || !trackAuthorization) {
+          throw new Error("Dados de streaming não disponíveis.");
+        }
+
+        msg.textContent = "3/3 → Carregando stream HLS e tocando…";
+        // 3) Obter URL HLS
+        const resStream = await fetch(
+          `https://${host3}/getStreamUrl?streamId=${encodeURIComponent(streamId)}&trackAuthorization=${encodeURIComponent(trackAuthorization)}`,
+          {
+            method: "GET",
+            headers: {
+              "X-Rapidapi-Key": rapidKey,
+              "X-Rapidapi-Host": host3
+            }
+          }
+        );
+        const sjson = await resStream.json();
+        const hlsUrl = sjson.url;
+        if (!hlsUrl) throw new Error("Não obteve URL de streaming.");
+
+        // 4) Reproduzir com HLS.js
+        playerDiv.style.display = "block";
+        msg.textContent = "";
+
+        const video = document.createElement("video");
+        video.controls = true;
+        playerDiv.appendChild(video);
+
+        if (Hls.isSupported()) {
+          const hls = new Hls();
+          hls.loadSource(hlsUrl);
+          hls.attachMedia(video);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+          video.src = hlsUrl;
+          video.addEventListener("loadedmetadata", () => video.play());
+        } else {
+          throw new Error("HLS não suportado pelo navegador.");
+        }
+
+      } catch (err) {
+        console.error(err);
+        msg.textContent = "❌ " + err.message;
+      }
     }
-  }
-</script>
+  </script>
 </body>
 </html>
