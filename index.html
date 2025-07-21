@@ -1,57 +1,43 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lilyfy – Buscando com Deezer</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lilyfy – YouTube MP3</title>
   <style>
-    body { margin:0; font-family: Arial, sans-serif; background:#111; color:white; }
+    body { margin:0; font-family: sans-serif; background:#111; color:#fff; }
     .search { display:flex; padding:20px; gap:10px; }
     .search input { flex:1; padding:8px; border-radius:4px; border:none; }
-    .search button { padding:8px 16px; background:#8a2be2; color:white; border:none; cursor:pointer; }
-    .results { padding:20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap:20px; }
+    .search button { padding:8px 16px; background:#8a2be2; border:none; color:white; cursor:pointer; }
+    .results { padding:20px; display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:20px; }
     .card { background:#222; padding:10px; border-radius:8px; display:flex; flex-direction:column; }
-    .card img { width:100%; border-radius:4px; }
-    .card h3 { font-size:16px; margin:10px 0 6px; }
-    .card p { font-size:14px; color:#aaa; margin:0 0 10px; }
-    .card button, .card a { margin-right:6px; background:#8a2be2; border:none; border-radius:4px; padding:6px 8px; color:white; cursor:pointer; text-decoration:none; }
-    .player { padding:20px; background:#1e1e1e; display:flex; gap:20px; align-items:center; }
-    .player audio { flex:1; }
-    .player-info h2, .player-info p { margin:0; }
+    .card h3 { font-size:16px; margin:10px 0; }
+    .card small { color:#aaa; margin-bottom:8px; }
+    .card button, .card a { margin-right:6px; background:#8a2be2; border:none; border-radius:4px; padding:6px 8px; color:white; cursor:pointer; text-decoration:none;}
+    audio { width:100%; margin-bottom:6px; }
   </style>
 </head>
 <body>
 
 <div class="search">
-  <input type="text" id="q" placeholder="Buscar músicas..." />
+  <input type="text" id="q" placeholder="Buscar música no YouTube..." />
   <button onclick="doSearch()">Buscar</button>
 </div>
 
-<div class="player" style="display:none;" id="playerDiv">
-  <div class="player-info">
-    <h2 id="nowTitle"></h2>
-    <p id="nowArtist"></p>
-  </div>
-  <audio id="nowAudio" controls></audio>
-  <a id="downloadBtn" href="#" download>⬇️ Baixar Preview</a>
-</div>
-
-<div class="results" id="results">Result will appear here.</div>
+<div class="results" id="results">Digite um termo e clique em buscar.</div>
 
 <script>
   const API_KEY = 'be6d832346msh3bdcbc41a36e31fp1de253jsnfd355f97011f';
-  const HOST = 'deezerdevs-deezer.p.rapidapi.com';
+  const HOST = 'yt-search-and-download-mp3.p.rapidapi.com';
 
   async function doSearch() {
     const q = document.getElementById('q').value.trim();
     const resDiv = document.getElementById('results');
-    const player = document.getElementById('playerDiv');
+    if (!q) return resDiv.textContent = 'Digite um termo.';
+
     resDiv.innerHTML = 'Carregando...';
-
-    if (!q) { resDiv.textContent = 'Digite algo para buscar.'; return; }
-
     try {
-      const resp = await fetch(`https://${HOST}/search?q=${encodeURIComponent(q)}`, {
+      const resp = await fetch(`https://${HOST}/search/${encodeURIComponent(q)}`, {
         method: 'GET',
         headers: {
           'X-Rapidapi-Key': API_KEY,
@@ -59,49 +45,26 @@
         }
       });
       const json = await resp.json();
-      const tracks = json.data || [];
-      if (!tracks.length) { resDiv.textContent = 'Nenhum resultado encontrado.'; return; }
+      const items = Array.isArray(json) ? json : (json.results || []);
+      if (!items.length) return resDiv.textContent = 'Nenhum resultado.';
 
       resDiv.innerHTML = '';
-      tracks.forEach(track => {
+      items.forEach(item => {
+        const { title, url: videoUrl, thumbnail, channel, link } = item;
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `
-          <img src="${track.album.cover}" alt="${track.title}">
-          <h3>${track.title}</h3>
-          <p>${track.artist.name}</p>
-          <button onclick="playTrack('${track.id}','${track.title}','${track.artist.name}')">▶️ Tocar</button>
-          <a href="${track.preview}" download>⬇️ Baixar</a>
+          ${thumbnail ? `<img src="${thumbnail}" alt="${title}" style="width:100%; border-radius:4px">` : ''}
+          <h3>${title}</h3>
+          <small>${channel || ''}</small>
+          <audio controls src="${link}"></audio>
+          <a href="${link}" download>⬇️ Baixar MP3</a>
         `;
         resDiv.appendChild(card);
       });
     } catch (err) {
       console.error(err);
       resDiv.textContent = 'Erro ao buscar. Veja o console.';
-    }
-  }
-
-  async function playTrack(id, title, artist) {
-    try {
-      const resp = await fetch(`https://${HOST}/track/${id}`, {
-        headers: {
-          'X-Rapidapi-Key': API_KEY,
-          'X-Rapidapi-Host': HOST
-        }
-      });
-      const info = await resp.json();
-      const preview = info.preview;
-      const player = document.getElementById('playerDiv');
-      document.getElementById('nowTitle').textContent = title;
-      document.getElementById('nowArtist').textContent = artist;
-      const audio = document.getElementById('nowAudio');
-      audio.src = preview;
-      document.getElementById('downloadBtn').href = preview;
-      player.style.display = 'flex';
-      audio.play();
-    } catch (err) {
-      console.error(err);
-      alert('Erro ao tentar tocar.');
     }
   }
 </script>
