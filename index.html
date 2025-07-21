@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lilyfy - Player de Música</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <style>
+    :root {
+      --roxo: #8a2be2;
+      --cinza: #181818;
+      --cinza-claro: #b3b3b3;
+      --preto: #121212;
+      --branco: #ffffff;
+      --card-bg: #1e1e1e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--preto);
+      color: var(--branco);
+    }
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--roxo);
+    }
+    .logo {
+      font-size: 36px;
+      font-weight: bold;
+      color: var(--roxo);
+    }
+    .search-box {
+      display: flex;
+      margin: 40px 0 20px;
+      gap: 10px;
+    }
+    .search-box input {
+      flex: 1;
+      padding: 14px;
+      border-radius: 30px;
+      border: none;
+      font-size: 16px;
+      background: #2a2a2a;
+      color: white;
+    }
+    .search-box button {
+      background-color: var(--roxo);
+      color: white;
+      border: none;
+      padding: 14px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 30px;
+      cursor: pointer;
+    }
+    .results {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 20px;
+    }
+    .music-card {
+      background: var(--card-bg);
+      border-radius: 15px;
+      padding: 12px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      position: relative;
+      transition: transform 0.2s ease;
+    }
+    .music-card:hover {
+      transform: scale(1.03);
+    }
+    .music-title { font-weight: bold; margin-top: 10px; }
+    .music-artist { font-size: 14px; color: var(--cinza-claro); }
+    .player {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #1b1b1b;
+      border-top: 2px solid var(--roxo);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 20px;
+      z-index: 999;
+      flex-wrap: wrap;
+    }
+    .player-info {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      gap: 15px;
+    }
+    .player-cover {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+    audio {
+      width: 100%;
+      max-width: 400px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">LILYFY</div>
+    </header>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Digite o nome da música ou artista">
+      <button onclick="searchSpotifyTracks()">Buscar</button>
+    </div>
+    <div id="searchTab" class="results"></div>
+  </div>
+
+  <div class="player" id="player" style="display: none;">
+    <div class="player-info">
+      <img class="player-cover" id="playerCover" src="" alt="Capa">
+      <div>
+        <div id="nowPlayingTitle"></div>
+        <div id="nowPlayingArtist" style="color: var(--cinza-claro);"></div>
+      </div>
+    </div>
+    <audio id="audioPlayer" controls autoplay></audio>
+  </div>
+
+  <script>
+    const rapidKey = "ff84f3d95amsh9190a33e8ebcd6fp19a6c2jsnd5003f708007";
+
+    async function searchSpotifyTracks() {
+      const query = document.getElementById("searchInput").value.trim();
+      const searchTab = document.getElementById("searchTab");
+      searchTab.innerHTML = 'Carregando...';
+
+      try {
+        const res = await fetch(`https://spotify-track-search-api.p.rapidapi.com/search?page=1&query=${encodeURIComponent(query)}`, {
+          method: 'GET',
+          headers: {
+            'X-Rapidapi-Key': rapidKey,
+            'X-Rapidapi-Host': 'spotify-track-search-api.p.rapidapi.com'
+          }
+        });
+        const data = await res.json();
+        const tracks = data.tracks || [];
+        searchTab.innerHTML = '';
+
+        if (tracks.length === 0) {
+          searchTab.innerHTML = '<p style="color: var(--cinza-claro); text-align:center;">Nenhuma faixa encontrada.</p>';
+        } else {
+          tracks.forEach(track => {
+            const card = document.createElement('div');
+            card.className = 'music-card';
+            card.innerHTML = `
+              <div class="music-title">${track.title}</div>
+              <div class="music-artist">${track.subtitle}</div>
+            `;
+            card.onclick = () => playSpotifyTrack(track.url.split('/').pop(), track.title, track.subtitle);
+            searchTab.appendChild(card);
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        searchTab.innerHTML = '<p style="color:red; text-align:center;">Erro ao buscar faixas</p>';
+      }
+    }
+
+    async function playSpotifyTrack(trackId, title, artist) {
+      const player = document.getElementById("player");
+      const audio = document.getElementById("audioPlayer");
+      const cover = document.getElementById("playerCover");
+
+      try {
+        const url = `https://spotify-downloader9.p.rapidapi.com/downloadSong?songId=https://open.spotify.com/track/${trackId}`;
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'X-Rapidapi-Key': rapidKey,
+            'X-Rapidapi-Host': 'spotify-downloader9.p.rapidapi.com'
+          }
+        });
+        const data = await res.json();
+        if (data.success && data.link) {
+          audio.src = data.link;
+          document.getElementById("nowPlayingTitle").textContent = title;
+          document.getElementById("nowPlayingArtist").textContent = artist;
+          cover.src = data.cover || 'https://via.placeholder.com/60';
+          player.style.display = "flex";
+        } else {
+          alert("Não foi possível tocar a música.");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao carregar faixa.");
+      }
+    }
+  </script>
+</body>
+</html>
