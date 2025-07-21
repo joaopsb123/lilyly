@@ -27,7 +27,6 @@
     header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
       margin-bottom: 30px;
     }
     
@@ -44,38 +43,11 @@
       font-size: 32px;
     }
     
-    .search-container {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-    
-    .search-type {
-      display: flex;
-      gap: 10px;
-    }
-    
-    .search-type button {
-      padding: 10px 15px;
-      background: var(--gray);
-      border: none;
-      color: var(--light);
-      border-radius: 50px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: all 0.3s;
-    }
-    
-    .search-type button.active {
-      background: var(--primary);
-    }
-    
     .search-box {
       display: flex;
       gap: 10px;
       margin-bottom: 30px;
       position: relative;
-      width: 100%;
     }
     
     input {
@@ -95,7 +67,7 @@
       box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.3);
     }
     
-    .search-btn {
+    button {
       padding: 15px 30px;
       background: linear-gradient(135deg, var(--primary), var(--secondary));
       border: none;
@@ -105,10 +77,9 @@
       font-weight: bold;
       font-size: 16px;
       transition: all 0.3s;
-      white-space: nowrap;
     }
     
-    .search-btn:hover {
+    button:hover {
       transform: translateY(-2px);
       box-shadow: 0 5px 15px rgba(138, 43, 226, 0.4);
     }
@@ -119,52 +90,10 @@
       gap: 15px;
     }
     
-    .album {
+    .track {
       background: var(--gray);
       padding: 20px;
       border-radius: 10px;
-      margin-bottom: 20px;
-    }
-    
-    .album-header {
-      display: flex;
-      gap: 20px;
-      margin-bottom: 20px;
-    }
-    
-    .album-cover {
-      width: 150px;
-      height: 150px;
-      border-radius: 10px;
-      object-fit: cover;
-    }
-    
-    .album-info {
-      flex: 1;
-    }
-    
-    .album-title {
-      font-size: 24px;
-      font-weight: bold;
-      margin-bottom: 5px;
-      color: var(--light);
-    }
-    
-    .album-artist {
-      font-size: 18px;
-      color: #aaa;
-      margin-bottom: 15px;
-    }
-    
-    .album-year {
-      color: #777;
-      font-size: 14px;
-    }
-    
-    .track {
-      background: #333;
-      padding: 15px;
-      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -173,39 +102,29 @@
     
     .track:hover {
       transform: translateX(5px);
-      background: #444;
+      background: #333;
     }
     
     .track-info {
       flex: 1;
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-    
-    .track-number {
-      color: #777;
-      width: 30px;
-      text-align: center;
     }
     
     .track-title {
       font-weight: bold;
-      font-size: 16px;
+      font-size: 18px;
+      margin-bottom: 5px;
       color: var(--light);
     }
     
-    .track-duration {
-      color: #777;
+    .track-artist {
+      color: #aaa;
       font-size: 14px;
-      margin-left: auto;
-      margin-right: 20px;
     }
     
     .download-btn {
       background: linear-gradient(135deg, var(--accent), #ff1493);
       color: white;
-      padding: 8px 15px;
+      padding: 10px 20px;
       border-radius: 50px;
       text-decoration: none;
       font-weight: bold;
@@ -213,7 +132,6 @@
       align-items: center;
       gap: 8px;
       transition: all 0.3s;
-      font-size: 14px;
     }
     
     .download-btn:hover {
@@ -227,7 +145,6 @@
       align-items: center;
       gap: 10px;
       font-size: 18px;
-      padding: 50px;
     }
     
     .spinner {
@@ -252,24 +169,10 @@
     }
     
     @media (max-width: 768px) {
-      .album-header {
-        flex-direction: column;
-      }
-      
-      .album-cover {
-        width: 100%;
-        height: auto;
-        max-height: 300px;
-      }
-      
       .track {
         flex-direction: column;
         align-items: flex-start;
-        gap: 10px;
-      }
-      
-      .track-info {
-        width: 100%;
+        gap: 15px;
       }
       
       .download-btn {
@@ -286,21 +189,17 @@
       <i class="fas fa-music"></i>
       <span>Lilyfy</span>
     </div>
-    <div class="search-type">
-      <button class="active" onclick="setSearchType('music')"><i class="fas fa-music"></i> Músicas</button>
-      <button onclick="setSearchType('album')"><i class="fas fa-compact-disc"></i> Álbuns</button>
-    </div>
   </header>
   
   <div class="search-box">
-    <input type="text" id="query" placeholder="Digite o nome da música, artista ou álbum..." autocomplete="off">
-    <button class="search-btn" onclick="doSearch()">
+    <input type="text" id="query" placeholder="Digite o nome da música ou artista..." autocomplete="off">
+    <button onclick="doSearch()">
       <i class="fas fa-search"></i> Buscar
     </button>
   </div>
   
   <div id="results" class="results">
-    <p style="text-align: center; color: #666;">Busque por músicas ou álbuns para baixar</p>
+    <p style="text-align: center; color: #666;">Busque por suas músicas favoritas para baixar</p>
   </div>
   
   <footer>
@@ -309,18 +208,7 @@
 
   <script>
     const API_KEY = 'be6d832346msh3bdcbc41a36e31fp1de253jsnfd355f97011f';
-    const API_HOST = 'youtube-music4.p.rapidapi.com';
-    let searchType = 'music';
-
-    function setSearchType(type) {
-      searchType = type;
-      document.querySelectorAll('.search-type button').forEach(btn => {
-        btn.classList.toggle('active', btn.textContent.toLowerCase().includes(type));
-      });
-      document.getElementById('query').placeholder = type === 'music' 
-        ? "Digite o nome da música ou artista..." 
-        : "Digite o nome do álbum ou artista...";
-    }
+    const API_HOST = 'youtube-music-api-detailed.p.rapidapi.com'; // API corrigida
 
     async function doSearch() {
       const query = document.getElementById("query").value.trim();
@@ -330,154 +218,63 @@
       results.innerHTML = `
         <div class="loading">
           <div class="spinner"></div>
-          <span>Buscando ${searchType === 'music' ? 'músicas' : 'álbuns'}...</span>
+          <span>Buscando músicas...</span>
         </div>
       `;
       
       try {
-        let data;
-        
-        if (searchType === 'music') {
-          // Busca por músicas
-          const response = await fetch(`https://${API_HOST}/search?query=${encodeURIComponent(query)}`, {
-            method: 'GET',
-            headers: {
-              'X-RapidAPI-Key': API_KEY,
-              'X-RapidAPI-Host': API_HOST
-            }
-          });
-          
-          if (!response.ok) throw new Error("Erro na busca de músicas");
-          data = await response.json();
-          
-          displayMusicResults(data);
-        } else {
-          // Busca por álbuns (simplificada - na prática precisaria de mais chamadas à API)
-          const response = await fetch(`https://${API_HOST}/search_albums?query=${encodeURIComponent(query)}`, {
-            method: 'GET',
-            headers: {
-              'X-RapidAPI-Key': API_KEY,
-              'X-RapidAPI-Host': API_HOST
-            }
-          });
-          
-          if (!response.ok) throw new Error("Erro na busca de álbuns");
-          data = await response.json();
-          
-          // Para demonstração, vamos pegar o primeiro álbum e buscar seus detalhes
-          if (data.data && data.data.length > 0) {
-            const albumId = data.data[0].album_id;
-            const albumResponse = await fetch(`https://${API_HOST}/album?id=${albumId}`, {
-              method: 'GET',
-              headers: {
-                'X-RapidAPI-Key': API_KEY,
-                'X-RapidAPI-Host': API_HOST
-              }
-            });
-            
-            if (!albumResponse.ok) throw new Error("Erro ao carregar álbum");
-            const albumData = await albumResponse.json();
-            displayAlbumResults(albumData);
-          } else {
-            results.innerHTML = '<p style="text-align: center; color: #ff5555;">Nenhum álbum encontrado. Tente com termos diferentes.</p>';
+        // Usando a API correta do YouTube Music
+        const response = await fetch(`https://${API_HOST}/search?query=${encodeURIComponent(query)}`, {
+          method: 'GET',
+          headers: {
+            'X-RapidAPI-Key': API_KEY,
+            'X-RapidAPI-Host': API_HOST
           }
+        });
+        
+        if (!response.ok) throw new Error("Erro na API: " + response.status);
+        
+        const data = await response.json();
+        
+        if (!data || !data.result || data.result.length === 0) {
+          results.innerHTML = '<p style="text-align: center; color: #ff5555;">Nenhum resultado encontrado. Tente com termos diferentes.</p>';
+          return;
         }
+        
+        results.innerHTML = '';
+        data.result.forEach((item, index) => {
+          if (index >= 10) return; // Limitar a 10 resultados
+          
+          const trackDiv = document.createElement('div');
+          trackDiv.className = 'track';
+          
+          const title = item.name || "Música sem título";
+          const artist = item.artist || "Artista desconhecido";
+          const videoId = item.videoId || '';
+          
+          trackDiv.innerHTML = `
+            <div class="track-info">
+              <div class="track-title">${title}</div>
+              <div class="track-artist">${artist}</div>
+            </div>
+            <a href="https://www.youtube.com/watch?v=${videoId}" 
+               class="download-btn" 
+               target="_blank">
+              <i class="fas fa-download"></i> Baixar
+            </a>
+          `;
+          
+          results.appendChild(trackDiv);
+        });
       } catch (error) {
         console.error(error);
         results.innerHTML = `
           <p style="text-align: center; color: #ff5555;">
-            Ocorreu um erro ao buscar ${searchType === 'music' ? 'músicas' : 'álbuns'}. 
+            Ocorreu um erro ao buscar músicas. Por favor, tente novamente mais tarde.
             <br><small>${error.message}</small>
           </p>
         `;
       }
-    }
-
-    function displayMusicResults(data) {
-      const results = document.getElementById("results");
-      
-      if (!data || !data.data || data.data.length === 0) {
-        results.innerHTML = '<p style="text-align: center; color: #ff5555;">Nenhum resultado encontrado. Tente com termos diferentes.</p>';
-        return;
-      }
-      
-      results.innerHTML = '';
-      data.data.forEach((item, index) => {
-        if (index >= 10) return;
-        
-        const trackDiv = document.createElement('div');
-        trackDiv.className = 'track';
-        
-        const title = item.title || "Música sem título";
-        const artist = item.artist || "Artista desconhecido";
-        const duration = item.duration ? formatDuration(item.duration) : "--:--";
-        
-        trackDiv.innerHTML = `
-          <div class="track-info">
-            <div class="track-number">${index + 1}</div>
-            <div>
-              <div class="track-title">${title}</div>
-              <div style="color: #777; font-size: 14px;">${artist}</div>
-            </div>
-            <div class="track-duration">${duration}</div>
-          </div>
-          <a href="${item.link || '#'}" 
-             class="download-btn" 
-             target="_blank">
-            <i class="fas fa-download"></i> Baixar
-          </a>
-        `;
-        
-        results.appendChild(trackDiv);
-      });
-    }
-
-    function displayAlbumResults(albumData) {
-      const results = document.getElementById("results");
-      
-      if (!albumData || !albumData.tracks || albumData.tracks.length === 0) {
-        results.innerHTML = '<p style="text-align: center; color: #ff5555;">Nenhum resultado encontrado. Tente com termos diferentes.</p>';
-        return;
-      }
-      
-      results.innerHTML = `
-        <div class="album">
-          <div class="album-header">
-            <img src="${albumData.thumbnail || 'https://via.placeholder.com/150'}" alt="Capa do Álbum" class="album-cover">
-            <div class="album-info">
-              <h1 class="album-title">${albumData.title || "Álbum sem título"}</h1>
-              <div class="album-artist">${albumData.artist || "Artista desconhecido"}</div>
-              <div class="album-year">${albumData.year || "Ano desconhecido"}</div>
-            </div>
-          </div>
-          <div class="tracks-list">
-            ${albumData.tracks.map((track, index) => `
-              <div class="track">
-                <div class="track-info">
-                  <div class="track-number">${index + 1}</div>
-                  <div>
-                    <div class="track-title">${track.title || "Música sem título"}</div>
-                    <div style="color: #777; font-size: 14px;">${track.artist || "Artista desconhecido"}</div>
-                  </div>
-                  <div class="track-duration">${track.duration ? formatDuration(track.duration) : "--:--"}</div>
-                </div>
-                <a href="${track.link || '#'}" 
-                   class="download-btn" 
-                   target="_blank">
-                  <i class="fas fa-download"></i> Baixar
-                </a>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    function formatDuration(seconds) {
-      if (!seconds) return "--:--";
-      const mins = Math.floor(seconds / 60);
-      const secs = Math.floor(seconds % 60);
-      return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     }
     
     // Permitir busca com Enter
